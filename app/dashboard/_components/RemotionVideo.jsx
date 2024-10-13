@@ -1,7 +1,10 @@
+
+
+// app/dashboard/_components/RemotionVideo.jsx
+
 import { AbsoluteFill, Audio, Img, interpolate, Sequence, useCurrentFrame, useVideoConfig } from 'remotion';
 
 const RemotionVideo = ({ script, audioFileUrl, captions, imageList, setDurationInFrames }) => {
-
     const { fps } = useVideoConfig();
     const frame = useCurrentFrame();
 
@@ -31,7 +34,7 @@ const RemotionVideo = ({ script, audioFileUrl, captions, imageList, setDurationI
                 )
                 return (
                     <Sequence key={index} from={startTime} durationInFrames={duration}>
-                        <Img src={item} 
+                        <Img src={item}
                             style={{
                                 width: '100%',
                                 height: '100%',
@@ -52,4 +55,13 @@ const RemotionVideo = ({ script, audioFileUrl, captions, imageList, setDurationI
     )
 }
 
-export default RemotionVideo
+export const MyComposition = ({ durationInFrames, ...restProps }) => {
+    return (
+        <RemotionVideo
+            {...restProps}
+            setDurationInFrames={() => {}}  // This is now handled in the parent component
+        />
+    );
+};
+
+export default RemotionVideo;
