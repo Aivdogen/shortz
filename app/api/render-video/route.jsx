@@ -1,46 +1,54 @@
-import { renderMedia } from '@remotion/renderer';
-import path from 'path';
-import fs from 'fs';
+// app/api/render-video/route.js
+
+import { NextResponse } from 'next/server';
+import { bundle } from '@remotion/bundler';
+import { getCompositions, renderMedia } from '@remotion/renderer';
 import os from 'os';
-import dynamic from 'next/dynamic';
+import path from 'path';
 
-const RemotionVideo = dynamic(() => import('../../dashboard/_components/RemotionVideo'), { ssr: false });
-
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
-  }
-
+export async function POST(req) {
   try {
-    const { videoData, durationInFrames } = req.body;
+    const { videoData, durationInFrames } = await req.json();
 
-    const outputPath = path.join(os.tmpdir(), 'output.mp4'); // Temporary file to store the rendered video
+    // Bundle your video
+    const bundled = await bundle(path.join(process.cwd(), 'app/dashboard/_components/RemotionVideo.jsx'));
 
+    // Fetch the compositions you have defined
+    const comps = await getCompositions(bundled);
+
+    // Select the composition you want to render
+    const composition = comps.find((c) => c.id === 'MyComposition');
+
+    // Set up the output location
+    const outputLocation = path.join(os.tmpdir(), `out-${Date.now()}.mp4`);
+
+    // Render the video
     await renderMedia({
-      composition: {
-        id: 'RemotionVideo',
-        component: RemotionVideo,
-        durationInFrames,
-        fps: 30,
-        width: 300,
-        height: 450,
-        inputProps: videoData,
-      },
+      composition,
+      serveUrl: bundled,
       codec: 'h264',
-      outputLocation: outputPath,
+      outputLocation,
+      inputProps: {
+        ...videoData,
+        durationInFrames,
+      },
     });
 
-    // Stream the rendered video to the client
-    const fileStream = fs.createReadStream(outputPath);
-    res.setHeader('Content-Type', 'video/mp4');
-    res.setHeader('Content-Disposition', 'attachment; filename="video.mp4"');
-    fileStream.pipe(res);
+    // Read the output file
+    const file = await fetch(`file://${outputLocation}`).then(res => res.blob());
 
-    fileStream.on('close', () => {
-      fs.unlinkSync(outputPath);
+    // Clean up: delete the output file
+    await fs.unlink(outputLocation);
+
+    // Return the video file
+    return new NextResponse(file, {
+      headers: {
+        'Content-Type': 'video/mp4',
+        'Content-Disposition': `attachment; filename="video_${videoData.id}.mp4"`,
+      },
     });
-  } catch (err) {
-    console.error('Error rendering video:', err);
-    res.status(500).json({ message: 'Failed to render video' });
+  } catch (error) {
+    console.error('Error in render-video API route:', error);
+    return NextResponse.json({ error: 'Failed to render video' }, { status: 500 });
   }
 }
