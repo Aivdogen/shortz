@@ -9,7 +9,7 @@
     "lint": "next lint",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "render-video": "remotion render app/api/get-video-script/route.jsx RemotionVideo out/video.mp4"
+    "render-video": "remotion render remotion/index.jsx Empty out/video.mp4"
   },
   "dependencies": {
     "@clerk/nextjs": "^5.7.1",
