@@ -9,6 +9,7 @@
     "lint": "next lint",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
+    "render-video": "node ./scripts/render-video.js"
   },
   "dependencies": {
     "@clerk/nextjs": "^5.7.1",
