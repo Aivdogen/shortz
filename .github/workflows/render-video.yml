@@ -1,0 +1,29 @@
+name: Render Video
+
+on:
+  workflow_dispatch:  # This allows manual triggering of the workflow.
+
+jobs:
+  render-video:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'  # Specify your Node.js version
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Render video
+        run: npm run render-video  # This assumes you have a script to render the video
+
+      - name: Upload rendered video
+        uses: actions/upload-artifact@v3
+        with:
+          name: rendered-video
+          path: /path/to/output/video.mp4  # Adjust the path to where the video will be rendered
