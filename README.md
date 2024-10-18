@@ -395,3 +395,4 @@ ai-short-video-gen
 └─ tailwind.config.js
 
 ```"# Ai-shortz" 
+"# shortz" 
