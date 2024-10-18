@@ -8,7 +8,7 @@ function VideoList({ videoList }) {
     const [videoId, setVideoId] = useState();
 
     return (
-        <div className='mt-10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-7'>
+        <div className='mt-10 grid grid-cols-2 md:grid-c    ols-3 lg:grid-cols-4 gap-7'>
             {videoList?.map((video, index) => (
                 <div
                     key={video.id}

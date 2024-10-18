@@ -110,25 +110,33 @@ function CreateNew() {
       if (!videoData.script || !videoData.audioFileUrl || !videoData.captions || !videoData.imageList || videoData.imageList.length === 0) {
         throw new Error("Missing required video data");
       }
-
+  
       const dataToInsert = {
-        script: videoData.script, // This is already a JSON object
+        script: videoData.script,
         audioFileUrl: videoData.audioFileUrl,
-        captions: videoData.captions, // This is already a JSON object
-        imageList: videoData.imageList, // This is already an array of strings
+        captions: videoData.captions,
+        imageList: videoData.imageList,
         createdBy: videoData.createdBy,
       };
-      setVideoId(result[0].id);
-      setPlayVideo(true);
+  
       console.log("Attempting to save video data:", dataToInsert);
-
+  
       const result = await db.insert(VideoData).values(dataToInsert).returning();
-
+  
       console.log("Video data saved successfully:", result);
+  
+      if (result && result[0] && result[0].id) {
+        setVideoId(result[0].id);
+        setPlayVideo(true);
+      } else {
+        console.error("Unexpected result structure:", result);
+      }
+  
+      return result;
     } catch (error) {
       console.error("Error saving video data:", error);
       console.error("Error details:", error.message, error.stack);
-      throw error; // Re-throw the error to be caught in the calling function
+      throw error;
     }
   };
 

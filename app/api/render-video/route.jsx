@@ -1,14 +1,28 @@
-// app/api/render-video/route.js
 
 import { NextResponse } from 'next/server';
 import { bundle } from '@remotion/bundler';
 import { getCompositions, renderMedia } from '@remotion/renderer';
 import os from 'os';
 import path from 'path';
+import fs from 'fs/promises';
+import { initializeApp } from 'firebase/app';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '@/config/FirebaseConfig';
+import {firebaseConfig} from '@/config/FirebaseConfig'
+
+
+const firebaseApp = initializeApp(firebaseConfig);
+
 
 export async function POST(req) {
   try {
     const { videoData, durationInFrames } = await req.json();
+
+    // Ensure the video is under 60 seconds
+    const durationInSeconds = durationInFrames / 30; // Assuming 30 fps
+    if (durationInSeconds > 60) {
+      return NextResponse.json({ error: 'Video duration exceeds 60 seconds limit' }, { status: 400 });
+    }
 
     // Bundle your video
     const bundled = await bundle(path.join(process.cwd(), 'app/dashboard/_components/RemotionVideo.jsx'));
@@ -35,18 +49,20 @@ export async function POST(req) {
     });
 
     // Read the output file
-    const file = await fetch(`file://${outputLocation}`).then(res => res.blob());
+    const file = await fs.readFile(outputLocation);
 
-    // Clean up: delete the output file
+    // Upload to Firebase Storage
+    const storageRef = ref(storage, `videos/video_${videoData.id}.mp4`);
+    await uploadBytes(storageRef, file);
+
+    // Get download URL
+    const downloadURL = await getDownloadURL(storageRef);
+
+    // Clean up: delete the local output file
     await fs.unlink(outputLocation);
 
-    // Return the video file
-    return new NextResponse(file, {
-      headers: {
-        'Content-Type': 'video/mp4',
-        'Content-Disposition': `attachment; filename="video_${videoData.id}.mp4"`,
-      },
-    });
+    // Return the download URL
+    return NextResponse.json({ downloadURL });
   } catch (error) {
     console.error('Error in render-video API route:', error);
     return NextResponse.json({ error: 'Failed to render video' }, { status: 500 });
